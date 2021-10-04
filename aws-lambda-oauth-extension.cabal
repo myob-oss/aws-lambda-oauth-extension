@@ -1,0 +1,115 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           aws-lambda-oauth-extension
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/aws-lambda-oauth-extension#readme>
+homepage:       https://github.com/githubuser/aws-lambda-oauth-extension#readme
+bug-reports:    https://github.com/githubuser/aws-lambda-oauth-extension/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2021 Author name here
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/aws-lambda-oauth-extension
+
+library
+  exposed-modules:
+      App
+      ExtensionClient
+      Lib
+      Server
+  other-modules:
+      Paths_aws_lambda_oauth_extension
+  hs-source-dirs:
+      src
+  default-extensions:
+      DataKinds
+      QuasiQuotes
+      TemplateHaskell
+      TypeOperators
+      DeriveGeneric
+      NamedFieldPuns
+      OverloadedStrings
+      FlexibleInstances
+      MultiParamTypeClasses
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , co-log
+    , containers
+    , dhall
+    , hashmap
+    , http-conduit
+    , http-types
+    , mtl
+    , shakespeare
+    , text
+    , time
+    , wai
+    , warp
+  default-language: Haskell2010
+
+executable aws-lambda-oauth-extension-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_aws_lambda_oauth_extension
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , aws-lambda-oauth-extension
+    , base >=4.7 && <5
+    , bytestring
+    , co-log
+    , containers
+    , dhall
+    , hashmap
+    , http-conduit
+    , http-types
+    , mtl
+    , shakespeare
+    , text
+    , time
+    , wai
+    , warp
+  default-language: Haskell2010
+
+test-suite aws-lambda-oauth-extension-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_aws_lambda_oauth_extension
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , aws-lambda-oauth-extension
+    , base >=4.7 && <5
+    , bytestring
+    , co-log
+    , containers
+    , dhall
+    , hashmap
+    , http-conduit
+    , http-types
+    , mtl
+    , shakespeare
+    , text
+    , time
+    , wai
+    , warp
+  default-language: Haskell2010

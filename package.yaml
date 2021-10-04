@@ -1,0 +1,74 @@
+name:                aws-lambda-oauth-extension
+version:             0.1.0.0
+github:              "githubuser/aws-lambda-oauth-extension"
+license:             BSD3
+author:              "Author name here"
+maintainer:          "example@example.com"
+copyright:           "2021 Author name here"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/githubuser/aws-lambda-oauth-extension#readme>
+
+dependencies:
+- aeson
+- base >= 4.7 && < 5
+- bytestring
+- co-log
+- containers
+- dhall
+- hashmap
+- http-conduit
+- http-types
+- mtl
+- shakespeare
+- text
+- time
+- wai
+- warp
+
+library:
+  source-dirs: src
+  default-extensions:
+    # Level 2: required for Servant
+    - DataKinds
+    # Level 1
+    - QuasiQuotes
+    - TemplateHaskell
+    - TypeOperators
+    # Level 0
+    - DeriveGeneric
+    - NamedFieldPuns
+    - OverloadedStrings
+    - FlexibleInstances
+    - MultiParamTypeClasses
+executables:
+  aws-lambda-oauth-extension-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - aws-lambda-oauth-extension
+
+tests:
+  aws-lambda-oauth-extension-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - aws-lambda-oauth-extension
