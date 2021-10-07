@@ -1,9 +1,7 @@
-# pin to latest commit of nixos 21.05 https://status.nixos.org/
-{ pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/4181644d09b9.tar.gz") {} }:
-with pkgs;
+with (import ./nixpkgs.nix);
 
 haskell.lib.buildStackProject {
-  name = "aws-lambda-oauth-extension";
+  name = "aws-lambda-oauth-extension-env";
   src = ./.;
   buildInputs = [
     zlib
