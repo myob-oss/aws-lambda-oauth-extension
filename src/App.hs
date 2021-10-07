@@ -27,13 +27,16 @@ data Config = Config
 
 instance FromDhall Config
 
+type CacheKeyAud = Text
+type CacheKeySub = Text
+type CacheKey = (CacheKeySub, CacheKeyAud)
 data CacheValue = CacheValue
   { token   :: Text
   , expired :: UTCTime}
-type EnvCache = TVar (Map Text CacheValue)
+type EnvCache = TVar (HM.Map CacheKey CacheValue)
 
 data EnvVar = EnvVar
-  { lambdaRuntimeApi :: Text
+  { lambdaRuntimeApi :: Maybe Text
   }
 data EnvReqCtx = EnvReqCtx
   {

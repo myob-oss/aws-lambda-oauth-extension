@@ -1,7 +1,7 @@
 module Lib where
 import           App
 import           Control.Monad.IO.Class      (MonadIO (liftIO))
-import           Control.Monad.Reader.Class  (asks)
+import           Control.Monad.Reader.Class  (MonadReader (ask), asks)
 import           Data.Aeson                  (FromJSON, decode, eitherDecode)
 import qualified Data.ByteString             as BS
 import           Data.ByteString.Lazy        (ByteString)
@@ -10,6 +10,9 @@ import           Data.Map                    (Map)
 import qualified Data.Map                    as Map
 import           Data.Text                   (Text, unpack)
 import           Data.Text.Encoding          (decodeUtf8, encodeUtf8)
+import           Data.Time                   (getCurrentTime)
+import           GHC.Conc                    (atomically, readTVar, readTVarIO,
+                                              writeTVar)
 import           GHC.Generics                (Generic)
 import qualified Network.HTTP.Client.Conduit as Client
 import qualified Network.HTTP.Simple         as Client
@@ -20,7 +23,6 @@ import           Network.Wai                 (Request (..), Response,
                                               lazyRequestBody, responseLBS)
 import           Text.Shakespeare.Text       (st)
 
--- https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata
 data TokenResp = TokenResp
   { access_token :: Text  } deriving (Generic, Show)
 
@@ -28,12 +30,12 @@ instance FromJSON TokenResp
 
 proxy :: Request -> (Response -> IO ResponseReceived) -> App ResponseReceived
 proxy req respond = do
-  configs <- asks eConfig
+  Env{eCache, eConfig} <- ask
   let host = requestHeaderHost req
-  case ( host, host >>= flip Map.lookup configs . decodeUtf8) of
+  case ( host, host >>= flip Map.lookup eConfig . decodeUtf8) of
     (Just host, Just config) -> do
       hcReq <- liftIO $ toHttpClientReq config host req
-      token <- liftIO $ exchangeToken config
+      token <- liftIO $ exchangeToken eCache config
       case token of
         Left resp -> liftIO $ respond $ toWaiResp resp
         Right t -> do
@@ -59,19 +61,28 @@ toHttpClientReq  Config{App.isSecure,port} host req = do
     , Client.requestBody = Client.RequestBodyLBS body
     }
 
-exchangeToken :: Config -> IO (Either (Client.Response ByteString) Text)
-exchangeToken Config{tokenEndpoint, clientId , clientSec, serverAud } = do
-  req <- Client.parseRequest $ unpack [st|POST #{tokenEndpoint}|]
-  resp <- Client.httpLBS
-    ( Client.setRequestBodyURLEncoded
-      [("grant_type", "client_credentials")
-      ,("client_id", encodeUtf8 clientId)
-      ,("client_secret", encodeUtf8 clientSec)
-      ,("audience", encodeUtf8 serverAud)
-      ] req
-    )
-  pure $ if Client.responseStatus resp == status200 then
-   case eitherDecode (Client.responseBody resp) of
-     Right TokenResp{access_token} -> Right access_token
-     Left e                        -> Left resp
-  else Left resp
+exchangeToken :: EnvCache -> Config -> IO (Either (Client.Response ByteString) Text)
+exchangeToken cache Config{tokenEndpoint, clientId , clientSec, serverAud } = do
+  cachedToken <- HM.lookup (clientId, serverAud) <$> readTVarIO cache
+  now <- getCurrentTime
+  case cachedToken of
+    Just CacheValue {token, expired} | expired < now -> pure $ Right token
+    _ -> do
+      req <- Client.parseRequest $ unpack [st|POST #{tokenEndpoint}|]
+      resp <- Client.httpLBS
+        ( Client.setRequestBodyURLEncoded
+          [("grant_type", "client_credentials")
+          ,("client_id", encodeUtf8 clientId)
+          ,("client_secret", encodeUtf8 clientSec)
+          ,("audience", encodeUtf8 serverAud)
+          ] req
+        )
+      if Client.responseStatus resp == status200 then
+        case eitherDecode (Client.responseBody resp) of
+          Right TokenResp{access_token} -> do
+            atomically $ do
+              m <- readTVar cache
+              writeTVar cache $ HM.insert (clientId, serverAud) (CacheValue access_token now) m
+            pure (Right access_token)
+          Left e                        -> pure (Left resp)
+        else pure (Left resp)

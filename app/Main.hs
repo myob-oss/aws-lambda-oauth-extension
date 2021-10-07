@@ -1,7 +1,7 @@
 module Main where
 
 import           Data.Maybe         (fromMaybe)
-import           Server
+import           Server             (startServer)
 import           System.Environment (lookupEnv)
 import           Text.Read          (readMaybe)
 

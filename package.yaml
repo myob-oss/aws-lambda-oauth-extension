@@ -39,8 +39,6 @@ dependencies:
 library:
   source-dirs: src
   default-extensions:
-    # Level 2: required for Servant
-    - DataKinds
     # Level 1
     - QuasiQuotes
     - TemplateHaskell

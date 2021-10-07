@@ -34,7 +34,6 @@ library
   hs-source-dirs:
       src
   default-extensions:
-      DataKinds
       QuasiQuotes
       TemplateHaskell
       TypeOperators
