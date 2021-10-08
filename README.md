@@ -1,5 +1,7 @@
 # aws-lambda-oauth-extension
 
+[![Build and Test](https://github.com/MYOB-Technology/aws-lambda-oauth-extension/actions/workflows/build.yml/badge.svg)](https://github.com/MYOB-Technology/aws-lambda-oauth-extension/actions/workflows/build.yml)
+
 caching and oauth client credentials layer for lambda
 
 [![](https://docs.aws.amazon.com/lambda/latest/dg/images/Overview-Full-Sequence.png)][3]
