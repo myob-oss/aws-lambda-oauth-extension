@@ -1,7 +1,7 @@
 name: Build and Test
 on:
   push:
-    branches: [ master, scan ]
+    branches: [ main ]
   pull_request:
     type: [ synchronize ]
 
