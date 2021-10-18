@@ -21,6 +21,6 @@ jobs:
         $(nix-build docker.nix) | docker load
         LOCAL_VERSION=$(dhall text < ./version.dhall)
         REPO=ghcr.io/myob-oss/aws-lambda-oauth-extension
-        docker tag $REPO:latest $REPOR:$LOCAL_VERSION
+        docker tag $REPO:latest $REPO:$LOCAL_VERSION
         docker push $REPO:$LOCAL_VERSION
         docker push $REPO:latest
