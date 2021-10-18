@@ -1,0 +1,26 @@
+name: Publish Docker Image
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    permissions:
+      packages: write
+      contents: write
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Dhall
+      uses: dhall-lang/setup-dhall@v4
+    - uses: cachix/install-nix-action@v12
+      with:
+        nix_path: nixpkgs=channel:nixos-21.05
+    - name: docker
+      run: |
+        $(nix-build docker.nix) | docker load
+        LOCAL_VERSION=$(dhall text < ./version.dhall)
+        REPO=ghcr.io/myob-oss/aws-lambda-oauth-extension
+        docker tag $REPO:latest $REPOR:$LOCAL_VERSION
+        docker push $REPO:$LOCAL_VERSION
+        docker push $REPO:latest
