@@ -1,7 +1,7 @@
 name: Publish Docker Image
 on:
   push:
-    branches: [ main ]
+    branches: [ main, docker ]
 jobs:
   build:
     permissions:
@@ -16,7 +16,13 @@ jobs:
     - uses: cachix/install-nix-action@v12
       with:
         nix_path: nixpkgs=channel:nixos-21.05
-    - name: docker
+    - name: Log in to the Container registry
+      uses: docker/login-action@v1.10.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Publish docker
       run: |
         $(nix-build docker.nix) | docker load
         LOCAL_VERSION=$(dhall text < ./version.dhall)
