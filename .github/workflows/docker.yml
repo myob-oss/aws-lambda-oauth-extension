@@ -1,7 +1,7 @@
 name: Publish Docker Image
 on:
   push:
-    branches: [ main, docker ]
+    branches: [ main ]
 jobs:
   build:
     permissions:
