@@ -40,13 +40,13 @@ ADD extension.tar.gz /
 2. add env to lambda `ALOE_CONFIG=/opt/extensions/config.dhall`
 
 ### Inline Dhall
-in `template.dhall`
+use `./examples/template.dhall`
 ```
-Environment = Some Funtion.Environment::{
-  Variables = Some (toMap {
-    ALOE_CONFIG = ./config.dhall as Text
-  })
-}
+dhall-to-yaml <<< './examples/template.dhall {
+    , name = "test"
+    , imageUri = "ecr.my.image:version"
+    , aloeConfig = ./config.dhall as Text
+    }'
 ```
 
 ## :unicorn: Contribute
