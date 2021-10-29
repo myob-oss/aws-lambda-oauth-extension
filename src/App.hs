@@ -14,17 +14,21 @@ import           Data.Text                   (Text)
 import           Data.Time                   (UTCTime)
 import           Dhall                       (FromDhall, Generic)
 import           GHC.Conc                    (TVar)
+import qualified Network.AWS                 as AWS
 import           Network.HTTP.Client.Conduit (Manager)
+
+data Secret = Plain Text | KmsEncrypted Text deriving Generic
 
 data Config = Config
   { clientId      :: Text
-  , clientSec     :: Text
+  , clientSec     :: Secret
   , serverAud     :: Text
   , port          :: Int
   , isSecure      :: Bool
   , tokenEndpoint :: Text
   } deriving Generic
 
+instance FromDhall Secret
 instance FromDhall Config
 
 type CacheKeyAud = Text
@@ -50,6 +54,7 @@ data Env = Env
   , eCache  :: !EnvCache
   , eConfig :: !(Map Text Config)
   , eEnvVar :: !EnvVar
+  , eAws    :: !AWS.Env
   }
 
 type App = ReaderT Env IO
