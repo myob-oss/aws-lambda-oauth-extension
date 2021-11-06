@@ -9,6 +9,7 @@ import           Data.Aeson                  (FromJSON, decode, eitherDecode)
 import qualified Data.ByteString             as BS
 import           Data.ByteString.Base64      (decodeBase64)
 import           Data.ByteString.Lazy        (ByteString)
+import qualified Data.ByteString.Lazy        as LBS
 import qualified Data.HashMap                as HM
 import           Data.Map                    (Map)
 import qualified Data.Map                    as Map
@@ -46,10 +47,14 @@ proxy req respond = do
       hcReq <- liftIO $ toHttpClientReq config host req
       token <- exchangeToken config
       case token of
-        Left resp -> liftIO $ respond $ resp
+        Left resp -> liftIO $ respond resp
         Right t -> do
           resp <- Client.httpLBS (Client.setRequestHeader hAuthorization [encodeUtf8 t] hcReq)
           liftIO $ respond $ toWaiResp resp
+    (Just "kms.amazonaws.com", _) -> do
+      body <- liftIO $ lazyRequestBody req
+      decrypted <- decryptClientSec (KmsEncrypted $ decodeUtf8 $ LBS.toStrict body)
+      liftIO $ respond $ maybe (responseLBS status400 [] "cannot kms decrypt") (responseLBS status200 [] . LBS.fromStrict .  encodeUtf8) decrypted
     _ -> liftIO $ respond $ responseLBS status404 [] ""
 
 toHttpClientReq :: Config -> BS.ByteString -> Request -> IO Client.Request
@@ -102,9 +107,22 @@ exchangeToken Config {tokenEndpoint, clientId, clientSec, serverAud} = do
 
 decryptClientSec :: Secret -> App (Maybe Text)
 decryptClientSec (Plain t) = pure $ Just t
-decryptClientSec (KmsEncrypted encrypted) = case decodeBase64 (Text.encodeUtf8 encrypted) of
-  Left e -> pure Nothing
-  Right v -> fmap Text.decodeUtf8 . view drsPlaintext <$> (aws . send . decrypt) v
+decryptClientSec (KmsEncrypted encrypted) = do
+  cache <- asks eCache
+  cachedVal <- liftIO $ HM.lookup (encrypted, "kms.amazonaws.com") <$> readTVarIO cache
+  case (cachedVal, decodeBase64 (Text.encodeUtf8 encrypted)) of
+    (Just CacheValue{token}, _) -> pure (Just token)
+    (Nothing, Right v) -> do
+      decrypted <- fmap Text.decodeUtf8 . view drsPlaintext <$> (aws . send . decrypt) v
+      case decrypted of
+        Just a -> liftIO $ do
+          now <- getCurrentTime
+          atomically $ do
+            m <- readTVar cache
+            writeTVar cache $ HM.insert (encrypted, "kms.amazonaws.com") (CacheValue a now) m
+            pure decrypted
+        Nothing -> pure Nothing
+    _ -> pure Nothing
 
 toWaiResp resp =
   responseLBS
