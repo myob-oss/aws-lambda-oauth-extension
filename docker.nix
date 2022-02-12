@@ -1,5 +1,5 @@
 let pkgs = import ./nixpkgs.nix;
-    binary = pkgs.haskell.lib.justStaticExecutables (import ./default.nix {});
+    binary = (import ./default.nix {}).aws-lambda-oauth-extension;
     extensionAlias = pkgs.runCommand "symlink" {} ''
       mkdir -p $out/opt/extensions
       ln -s ${binary}/bin/aws-lambda-oauth-extension-exe $out/opt/extensions/aws-lambda-oauth-extension
