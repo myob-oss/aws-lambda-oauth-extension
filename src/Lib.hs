@@ -1,27 +1,37 @@
 module Lib where
 import           App
-import           Control.Monad.IO.Class      (MonadIO (liftIO))
-import           Control.Monad.Reader.Class  (MonadReader (ask), asks)
-import           Data.Aeson                  (FromJSON, decode, eitherDecode)
-import qualified Data.ByteString             as BS
-import           Data.ByteString.Lazy        (ByteString)
-import qualified Data.HashMap                as HM
-import           Data.Map                    (Map)
-import qualified Data.Map                    as Map
-import           Data.Text                   (Text, unpack)
-import           Data.Text.Encoding          (decodeUtf8, encodeUtf8)
-import           Data.Time                   (getCurrentTime)
-import           GHC.Conc                    (atomically, readTVar, readTVarIO,
-                                              writeTVar)
-import           GHC.Generics                (Generic)
-import qualified Network.HTTP.Client.Conduit as Client
-import qualified Network.HTTP.Simple         as Client
-import           Network.HTTP.Types          (hAuthorization, status200,
-                                              status404)
-import           Network.Wai                 (Request (..), Response,
-                                              ResponseReceived, defaultRequest,
-                                              lazyRequestBody, responseLBS)
-import           Text.Shakespeare.Text       (st)
+import           Control.Monad.IO.Class                          (MonadIO (liftIO))
+import           Control.Monad.Reader.Class                      (MonadReader (ask),
+                                                                  asks)
+import           Data.Aeson                                      (FromJSON,
+                                                                  decode,
+                                                                  eitherDecode)
+import qualified Data.ByteString                                 as BS
+import           Data.ByteString.Lazy                            (ByteString)
+import qualified Data.HashMap                                    as HM
+import           Data.Map                                        (Map)
+import qualified Data.Map                                        as Map
+import           Data.Text                                       (Text, unpack)
+import           Data.Text.Encoding                              (decodeUtf8,
+                                                                  encodeUtf8)
+import           Data.Time                                       (getCurrentTime)
+import           GHC.Conc                                        (atomically,
+                                                                  readTVar,
+                                                                  readTVarIO,
+                                                                  writeTVar)
+import           GHC.Generics                                    (Generic)
+import           Network.HTTP.Types                              (hAuthorization,
+                                                                  status200,
+                                                                  status404)
+import           Network.Wai                                     (Request (..),
+                                                                  Response,
+                                                                  ResponseReceived,
+                                                                  defaultRequest,
+                                                                  lazyRequestBody,
+                                                                  responseLBS)
+import qualified OpenTelemetry.Instrumentation.HttpClient        as Client
+import qualified OpenTelemetry.Instrumentation.HttpClient.Simple as Client
+import           Text.Shakespeare.Text                           (st)
 
 data TokenResp = TokenResp
   { access_token :: Text  } deriving (Generic, Show)
@@ -39,7 +49,7 @@ proxy req respond = do
       case token of
         Left resp -> liftIO $ respond $ toWaiResp resp
         Right t -> do
-          resp <- Client.httpLBS (Client.setRequestHeader hAuthorization [encodeUtf8 t] hcReq)
+          resp <- Client.httpLBS Client.httpClientInstrumentationConfig (Client.setRequestHeader hAuthorization [encodeUtf8 t] hcReq)
           liftIO $ respond $ toWaiResp resp
     _ -> liftIO $ respond $ responseLBS status404  [] ""
   where
@@ -69,7 +79,7 @@ exchangeToken cache Config{tokenEndpoint, clientId , clientSec, serverAud } = do
     Just CacheValue {token, expired} | expired < now -> pure $ Right token
     _ -> do
       req <- Client.parseRequest $ unpack [st|POST #{tokenEndpoint}|]
-      resp <- Client.httpLBS
+      resp <- Client.httpLBS Client.httpClientInstrumentationConfig
         ( Client.setRequestBodyURLEncoded
           [("grant_type", "client_credentials")
           ,("client_id", encodeUtf8 clientId)

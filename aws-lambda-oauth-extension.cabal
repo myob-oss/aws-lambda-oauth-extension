@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.34.5.
 --
 -- see: https://github.com/sol/hpack
 
@@ -50,6 +50,9 @@ library
     , containers
     , dhall
     , hashmap
+    , hs-opentelemetry-instrumentation-http-client
+    , hs-opentelemetry-instrumentation-wai
+    , hs-opentelemetry-sdk
     , http-conduit
     , http-types
     , mtl
@@ -76,6 +79,9 @@ executable aws-lambda-oauth-extension-exe
     , containers
     , dhall
     , hashmap
+    , hs-opentelemetry-instrumentation-http-client
+    , hs-opentelemetry-instrumentation-wai
+    , hs-opentelemetry-sdk
     , http-conduit
     , http-types
     , mtl
@@ -103,6 +109,9 @@ test-suite aws-lambda-oauth-extension-test
     , containers
     , dhall
     , hashmap
+    , hs-opentelemetry-instrumentation-http-client
+    , hs-opentelemetry-instrumentation-wai
+    , hs-opentelemetry-sdk
     , http-conduit
     , http-types
     , mtl

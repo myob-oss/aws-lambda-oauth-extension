@@ -1,34 +1,44 @@
 module Server where
 import           App
-import           Colog                       (simpleMessageAction)
-import           Control.Concurrent          (forkIO, killThread, newEmptyMVar,
-                                              newMVar, takeMVar)
-import           Control.Monad.IO.Class      (liftIO)
-import           Control.Monad.Reader        (ReaderT (runReaderT))
-import qualified Data.HashMap                as HM
-import           Data.Map                    (Map)
-import           Data.Maybe                  (fromMaybe, isNothing)
-import           Data.Text                   (Text, pack)
-import           Dhall                       (auto, input)
+import           Colog                             (simpleMessageAction)
+import           Control.Concurrent                (forkIO, killThread,
+                                                    newEmptyMVar, newMVar,
+                                                    takeMVar)
+import           Control.Exception.Base            (bracket)
+import           Control.Monad.IO.Class            (liftIO)
+import           Control.Monad.Reader              (ReaderT (runReaderT))
+import qualified Data.HashMap                      as HM
+import           Data.Map                          (Map)
+import           Data.Maybe                        (fromMaybe, isNothing)
+import           Data.Text                         (Text, pack)
+import           Dhall                             (auto, input)
 import           ExtensionClient
-import           GHC.Conc                    (newTVarIO)
+import           GHC.Conc                          (newTVarIO)
 import           Lib
-import           Network.HTTP.Client.Conduit (Request, newManager)
-import           Network.Wai.Handler.Warp    (run)
-import           System.Environment          (getEnv, lookupEnv)
+import           Network.HTTP.Client.Conduit       (Request, newManager)
+import           Network.Wai.Handler.Warp          (run)
+import           OpenTelemetry.Instrumentation.Wai (newOpenTelemetryWaiMiddleware)
+import           OpenTelemetry.Trace               (initializeGlobalTracerProvider,
+                                                    initializeTracerProvider,
+                                                    shutdownTracerProvider)
+import           System.Environment                (getEnv, lookupEnv)
+
 startServer :: Int -> IO ()
 startServer port = do
   env <- mkEnv
-  let server = run port $ \req resp -> runReaderT (proxy req resp) env
-  case (lambdaRuntimeApi . eEnvVar) env of
-    Nothing -> server
-    Just runtimeApi -> do
-      exitSignal <- newEmptyMVar
-      forkIO server
-      id <- register runtimeApi
-      nextEvent runtimeApi id exitSignal
-      takeMVar exitSignal
-
+  bracket
+    initializeGlobalTracerProvider
+    shutdownTracerProvider $ \_ -> do
+      otelMiddleware <- newOpenTelemetryWaiMiddleware
+      let server = run port $ otelMiddleware $ \req resp -> runReaderT (proxy req resp) env
+      case (lambdaRuntimeApi . eEnvVar) env of
+        Nothing -> server
+        Just runtimeApi -> do
+          exitSignal <- newEmptyMVar
+          forkIO server
+          id <- register runtimeApi
+          nextEvent runtimeApi id exitSignal
+          takeMVar exitSignal
 
 mkEnv :: IO Env
 mkEnv = do

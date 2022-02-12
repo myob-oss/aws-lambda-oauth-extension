@@ -17,7 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: lts-18.6 # ghc 8.10.4
+resolver: lts-18.23 # ghc 8.10.7
 
 nix:
   enable: true
@@ -46,6 +46,18 @@ packages:
 extra-deps:
   - co-log-0.4.0.1@sha256:3d4c17f37693c80d1aa2c41669bc3438fac3e89dc5f479e57d79bc3ddc4dfcc5,5087
   - ansi-terminal-0.10.3@sha256:e2fbcef5f980dc234c7ad8e2fa433b0e8109132c9e643bc40ea5608cd5697797,3226
+  - hs-opentelemetry-exporter-otlp-0.0.1.3
+  - hs-opentelemetry-instrumentation-wai-0.0.1.2
+  - hs-opentelemetry-instrumentation-http-client-0.0.2.0
+  - hs-opentelemetry-propagator-w3c-0.0.1.2
+  - hs-opentelemetry-sdk-0.0.3.1
+  - hs-opentelemetry-api-0.0.3.1
+  - hs-opentelemetry-otlp-0.0.1.0
+  - hs-opentelemetry-instrumentation-conduit-0.0.1.1
+  - proto-lens-0.7.1.0@sha256:b151890929e71db5b8c2ad86cd758bcdf1dfcf25f34eb6c9ce19e3d7cd4eae39,2959
+  - proto-lens-runtime-0.7.0.1@sha256:703f327422b2e204f8ea13c5e178edd8ab42ccd01c7a5a89fcb1b37ab474c68a,3038
+  - thread-utils-context-0.2.0.0@sha256:7863e568c7a43cd21616342d20484d4c962aaa9710619f104c6fb7ee32273940,1883
+  - thread-utils-finalizers-0.1.0.0@sha256:a8435240bfc0ae96c94704d2986699a11a395c496f9a7f2e5f5d729a0b967549,1381
 # Override default flag values for local packages and extra-deps
 # flags: {}
 

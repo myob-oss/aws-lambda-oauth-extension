@@ -35,6 +35,9 @@ dependencies:
 - time
 - wai
 - warp
+- hs-opentelemetry-sdk
+- hs-opentelemetry-instrumentation-wai
+- hs-opentelemetry-instrumentation-http-client
 
 library:
   source-dirs: src
